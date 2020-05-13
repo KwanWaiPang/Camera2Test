@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <Button
+        android:id="@+id/take_photo_BackCamera"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="BackCamera"
+        android:textAllCaps="false"
+        />
+
+
+
+    <RelativeLayout
+        android:layout_width="200dp"
+        android:layout_height="200dp">
+
+        <TextureView
+            android:id="@+id/texture_view_back"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_gravity="center_horizontal" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:text="TextureView(摄像头预览)"
+            android:textColor="#f00"
+            android:textSize="10sp" />
+    </RelativeLayout>
+
+
+
+
+
+</LinearLayout>
