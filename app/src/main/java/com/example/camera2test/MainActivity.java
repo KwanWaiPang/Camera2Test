@@ -12,16 +12,21 @@ import android.content.pm.PackageManager;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Range;
 import android.view.Surface;
 import android.view.TextureView;
+import android.widget.Toast;
 
 import java.util.Arrays;
+
+import static android.hardware.camera2.CaptureRequest.SENSOR_EXPOSURE_TIME;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
     private CameraCaptureSession mCameraCaptureSession;//是一个事务，用来向相机设备发送获取图像的请求。
     private CameraDevice mCameraDevice;//是一个连接的相机设备代表，你可以把它看作为相机设备在 java 代码中的表现
     private Surface mPreviewSurface;//Surface来自控件TextureView，它用来显示摄像头的图像，
+
+    private CameraCharacteristics mCameraCharacteristics;
 
     //权限
     private static String[] PERMISSIONS_STORAGE = {
@@ -70,7 +77,9 @@ public class MainActivity extends AppCompatActivity {
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
                 // TODO 自动生成的方法存根
                 mPreviewSurface = new Surface(surface);//定义一个surface
-                CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);//系统服务，专门用于检测和打开相机，以及获取相机设备特性
+
+                //1、先通过通过context.getSystemService(Context.CAMERA_SERVICE) 方法来获取CameraManager
+                final CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);//系统服务，专门用于检测和打开相机，以及获取相机设备特性
 
                 try {
                     if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -83,14 +92,27 @@ public class MainActivity extends AppCompatActivity {
                         // for ActivityCompat#requestPermissions for more details.
                         return;
                     }
-                    manager.openCamera("1", new CameraDevice.StateCallback() {//打开指定的相机设备
+                    //2、再通过调用CameraManager .open()方法在回调中得到CameraDevice。ID0为后置摄像头
+                    manager.openCamera("0", new CameraDevice.StateCallback() {//打开指定的相机设备
 
                         //成功打开时的回调，此时 camera 就准备就绪，并且可以得到一个 CameraDevice 实例。
                         @Override
                         public void onOpened(@NonNull CameraDevice camera) {
-                            mCameraDevice = camera;//相机设备
+                            mCameraDevice = camera;//所回调的相机设备赋予给mCameraDevice
                             try {
+                                //获取曝光时间这个属性。
+                                mCameraCharacteristics = manager.getCameraCharacteristics(Integer.toString(0));
+                                Range<Long> range=mCameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE);
+                                long max=range.getUpper();
+                                long min=range.getLower();
+                                //通过Toast输出
+                                Toast.makeText(MainActivity.this, "max:"+max+"min:"+min,Toast.LENGTH_LONG).show();
+
+
+
+
                                 //CameraCaptureSession 是一个事务，用来向相机设备发送获取图像的请求
+                                //3、通过CameraDevice.createCaptureSession() 在回调中获取CameraCaptureSession
                                 mCameraDevice.createCaptureSession(Arrays.asList(mPreviewSurface), new CameraCaptureSession.StateCallback() {
                                     //CameraCaptureSession.StateCallback是其内部类
 
@@ -100,12 +122,21 @@ public class MainActivity extends AppCompatActivity {
 
                                         mCameraCaptureSession = session;//是一个事务，用来向相机设备发送获取图像的请求。
                                         try {
+                                            //4、构建CaptureRequest, 有三种模式可选 预览/拍照/录像
                                             //通过下面方法获得一个CaptureRequest.Builder对象。
                                             //基本配置都是通过该构造者来配置
                                             //最后通过 CaptureRequest.Builder 对象的 build() 方法便可得到 CaptureRequest 实例（见setRepeatingRequest方法）
                                             CaptureRequest.Builder builder;//先拿到一个 CaptureRequest.Builder 对象
                                             builder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
                                             //TEMPLATE_PREVIEW ： 用于创建一个相机预览请求。相机会优先保证高帧率而不是高画质。适用于所有相机设备
+                                            //TEMPLATE_STILL_CAPTURE ： 用于创建一个拍照请求。
+                                            //TEMPLATE_RECORD ： 用于创建一个录像请求。
+
+                                            //设置曝光时间
+
+                                            builder.set(CaptureRequest.BLACK_LEVEL_LOCK, false);//黑电平补偿是锁定
+                                            builder.set(CaptureRequest.SENSOR_EXPOSURE_TIME, (long) 10000);
+
 
                                             //通过 CaptureRequest.Builder 对象设置一些捕捉请求的配置
                                             //设置指定key的值
@@ -113,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
 
                                             builder.addTarget(mPreviewSurface);//绑定目标Surface
 
+                                            //5、通过 CameraCaptureSession发送CaptureRequest, capture表示只发一次请求, setRepeatingRequest表示不断发送请求.
                                             //不断的重复请求捕捉画面，常用于预览或者连拍场景。
                                             mCameraCaptureSession.setRepeatingRequest(builder.build(), null, null);
                                         } catch (CameraAccessException e1) {
