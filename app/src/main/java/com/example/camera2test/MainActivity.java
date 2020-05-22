@@ -134,7 +134,9 @@ public class MainActivity extends AppCompatActivity {
 
                                             //设置曝光时间
 
-                                            builder.set(CaptureRequest.BLACK_LEVEL_LOCK, false);//黑电平补偿是锁定。
+//                                            builder.set(CaptureRequest.BLACK_LEVEL_LOCK, false);//黑电平补偿是锁定。
+                                            builder.set(CaptureRequest.CONTROL_AE_MODE,0);
+                                            builder.set(CaptureRequest.CONTROL_MODE,0);
                                             builder.set(CaptureRequest.SENSOR_EXPOSURE_TIME, (long) 10000);
 
 
@@ -146,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
 
                                             //5、通过 CameraCaptureSession发送CaptureRequest, capture表示只发一次请求, setRepeatingRequest表示不断发送请求.
                                             //不断的重复请求捕捉画面，常用于预览或者连拍场景。
-                                            mCameraCaptureSession.setRepeatingRequest(builder.build(), null, null);
+                                            mCameraCaptureSession.capture(builder.build(), null, null);
                                         } catch (CameraAccessException e1) {
                                             e1.printStackTrace();
                                         }
