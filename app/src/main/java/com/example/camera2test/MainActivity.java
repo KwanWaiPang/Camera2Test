@@ -135,6 +135,7 @@ public class MainActivity extends AppCompatActivity {
                                             //设置曝光时间
 
 //                                            builder.set(CaptureRequest.BLACK_LEVEL_LOCK, false);//黑电平补偿是锁定
+                                            //要先设置下面两句，才可以控制曝光度
                                             builder.set(CaptureRequest.CONTROL_AE_MODE,0);
                                             builder.set(CaptureRequest.CONTROL_MODE,0);
                                             builder.set(CaptureRequest.SENSOR_EXPOSURE_TIME, (long) 10000);
